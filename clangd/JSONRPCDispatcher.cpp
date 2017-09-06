@@ -12,6 +12,8 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/YAMLParser.h"
+#include <istream>
+
 using namespace clang;
 using namespace clangd;
 
@@ -128,4 +130,87 @@ bool JSONRPCDispatcher::call(StringRef Content) const {
   callHandler(Handlers, Method, Id, nullptr, UnknownHandler.get());
 
   return true;
+}
+
+void clangd::runLanguageServerLoop(std::istream &In, JSONOutput &Out,
+                                   JSONRPCDispatcher &Dispatcher,
+                                   bool &IsDone) {
+  while (In.good()) {
+    // A Language Server Protocol message starts with a set of HTTP headers,
+    // delimited  by \r\n, and terminated by an empty line (\r\n).
+    unsigned long long ContentLength = 0;
+    while (In.good()) {
+      std::string Line;
+      std::getline(In, Line);
+      if (!In.good() && errno == EINTR) {
+        In.clear();
+        continue;
+      }
+
+      llvm::StringRef LineRef(Line);
+
+      // We allow YAML-style comments in headers. Technically this isn't part
+      // of the LSP specification, but makes writing tests easier.
+      if (LineRef.startswith("#"))
+        continue;
+
+      // Content-Type is a specified header, but does nothing.
+      // Content-Length is a mandatory header. It specifies the length of the
+      // following JSON.
+      // It is unspecified what sequence headers must be supplied in, so we
+      // allow any sequence.
+      // The end of headers is signified by an empty line.
+      if (LineRef.consume_front("Content-Length: ")) {
+        if (ContentLength != 0) {
+          Out.log("Warning: Duplicate Content-Length header received. "
+                  "The previous value for this message ("
+                  + std::to_string(ContentLength)
+                  + ") was ignored.\n");
+        }
+
+        llvm::getAsUnsignedInteger(LineRef.trim(), 0, ContentLength);
+        continue;
+      } else if (!LineRef.trim().empty()) {
+        // It's another header, ignore it.
+        continue;
+      } else {
+        // An empty line indicates the end of headers.
+        // Go ahead and read the JSON.
+        break;
+      }
+    }
+
+    if (ContentLength > 0) {
+      // Now read the JSON. Insert a trailing null byte as required by the YAML
+      // parser.
+      std::vector<char> JSON(ContentLength + 1, '\0');
+      In.read(JSON.data(), ContentLength);
+
+      // If the stream is aborted before we read ContentLength bytes, In
+      // will have eofbit and failbit set.
+      if (!In) {
+        Out.log("Input was aborted. Read only "
+                + std::to_string(In.gcount())
+                + " bytes of expected "
+                + std::to_string(ContentLength)
+                + ".\n");
+        break;
+      }
+
+      llvm::StringRef JSONRef(JSON.data(), ContentLength);
+      // Log the message.
+      Out.log("<-- " + JSONRef + "\n");
+
+      // Finally, execute the action for this JSON message.
+      if (!Dispatcher.call(JSONRef))
+        Out.log("JSON dispatch failed!\n");
+
+      // If we're done, exit the loop.
+      if (IsDone)
+        break;
+    } else {
+      Out.log( "Warning: Missing Content-Length header, or message has zero "
+               "length.\n" );
+    }
+  }
 }

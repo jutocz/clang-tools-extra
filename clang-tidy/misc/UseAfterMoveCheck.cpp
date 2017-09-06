@@ -271,15 +271,17 @@ void UseAfterMoveFinder::getReinits(
   auto DeclRefMatcher =
       declRefExpr(hasDeclaration(equalsNode(MovedVariable))).bind("declref");
 
-  auto StandardContainerTypeMatcher = hasType(cxxRecordDecl(
-      hasAnyName("::std::basic_string", "::std::vector", "::std::deque",
-                 "::std::forward_list", "::std::list", "::std::set",
-                 "::std::map", "::std::multiset", "::std::multimap",
-                 "::std::unordered_set", "::std::unordered_map",
-                 "::std::unordered_multiset", "::std::unordered_multimap")));
+  auto StandardContainerTypeMatcher = hasType(hasUnqualifiedDesugaredType(
+      recordType(hasDeclaration(cxxRecordDecl(hasAnyName(
+          "::std::basic_string", "::std::vector", "::std::deque",
+          "::std::forward_list", "::std::list", "::std::set", "::std::map",
+          "::std::multiset", "::std::multimap", "::std::unordered_set",
+          "::std::unordered_map", "::std::unordered_multiset",
+          "::std::unordered_multimap"))))));
 
-  auto StandardSmartPointerTypeMatcher = hasType(cxxRecordDecl(
-      hasAnyName("::std::unique_ptr", "::std::shared_ptr", "::std::weak_ptr")));
+  auto StandardSmartPointerTypeMatcher = hasType(hasUnqualifiedDesugaredType(
+      recordType(hasDeclaration(cxxRecordDecl(hasAnyName(
+          "::std::unique_ptr", "::std::shared_ptr", "::std::weak_ptr"))))));
 
   // Matches different types of reinitialization.
   auto ReinitMatcher =
@@ -384,6 +386,13 @@ void UseAfterMoveCheck::registerMatchers(MatchFinder *Finder) {
       // the direct ancestor of the std::move() that isn't one of the node
       // types ignored by ignoringParenImpCasts().
       stmt(forEach(expr(ignoringParenImpCasts(CallMoveMatcher))),
+           // Don't allow an InitListExpr to be the moving call. An InitListExpr
+           // has both a syntactic and a semantic form, and the parent-child
+           // relationships are different between the two. This could cause an
+           // InitListExpr to be analyzed as the moving call in addition to the
+           // Expr that we actually want, resulting in two diagnostics with
+           // different code locations for the same move.
+           unless(initListExpr()),
            unless(expr(ignoringParenImpCasts(equalsBoundNode("call-move")))))
           .bind("moving-call"),
       this);
@@ -398,7 +407,7 @@ void UseAfterMoveCheck::check(const MatchFinder::MatchResult &Result) {
   const auto *MovingCall = Result.Nodes.getNodeAs<Expr>("moving-call");
   const auto *Arg = Result.Nodes.getNodeAs<DeclRefExpr>("arg");
 
-  if (!MovingCall)
+  if (!MovingCall || !MovingCall->getExprLoc().isValid())
     MovingCall = CallMove;
 
   Stmt *FunctionBody = nullptr;

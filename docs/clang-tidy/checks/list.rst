@@ -4,8 +4,24 @@ Clang-Tidy Checks
 =================
 
 .. toctree::
+   android-cloexec-accept
+   android-cloexec-accept4
+   android-cloexec-creat
+   android-cloexec-epoll-create
+   android-cloexec-epoll-create1
+   android-cloexec-dup
+   android-cloexec-fopen
+   android-cloexec-inotify-init
+   android-cloexec-inotify-init1
+   android-cloexec-memfd-create
+   android-cloexec-open
+   android-cloexec-socket
    boost-use-to-string
+   bugprone-integer-division
+   bugprone-suspicious-memset-usage
+   bugprone-undefined-memory-manipulation
    cert-dcl03-c (redirects to misc-static-assert) <cert-dcl03-c>
+   cert-dcl21-cpp
    cert-dcl50-cpp
    cert-dcl54-cpp (redirects to misc-new-delete-overloads) <cert-dcl54-cpp>
    cert-dcl58-cpp
@@ -22,6 +38,7 @@ Clang-Tidy Checks
    cert-msc30-c (redirects to cert-msc50-cpp) <cert-msc30-c>
    cert-msc50-cpp
    cert-oop11-cpp (redirects to misc-move-constructor-init) <cert-oop11-cpp>
+   cppcoreguidelines-c-copy-assignment-signature
    cppcoreguidelines-interfaces-global-init
    cppcoreguidelines-no-malloc
    cppcoreguidelines-pro-bounds-array-to-pointer-decay
@@ -50,9 +67,24 @@ Clang-Tidy Checks
    google-readability-todo
    google-runtime-int
    google-runtime-member-string-references
-   google-runtime-memset
    google-runtime-operator
    google-runtime-references
+   hicpp-braces-around-statements (redirects to readability-braces-around-statements) <hicpp-braces-around-statements>
+   hicpp-exception-baseclass
+   hicpp-explicit-conversions (redirects to google-explicit-constructor) <hicpp-explicit-conversions>
+   hicpp-function-size (redirects to readability-function-size) <hicpp-function-size>
+   hicpp-invalid-access-moved (redirects to misc-use-after-move) <hicpp-invalid-access-moved>
+   hicpp-member-init (redirects to cppcoreguidelines-pro-type-member-init) <hicpp-member-init>
+   hicpp-named-parameter (redirects to readability-named-parameter) <hicpp-named-parameter>
+   hicpp-new-delete-operators (redirects to misc-new-delete-overloads) <hicpp-new-delete-operators>
+   hicpp-no-assembler
+   hicpp-noexcept-move (redirects to misc-noexcept-moveconstructor) <hicpp-noexcept-move>
+   hicpp-signed-bitwise
+   hicpp-special-member-functions (redirects to cppcoreguidelines-special-member-functions) <hicpp-special-member-functions>
+   hicpp-undelegated-constructor (redirects to misc-undelegated-constructor) <hicpp-undelegated-constructor>
+   hicpp-use-equals-default (redirects to modernize-use-equals-default) <hicpp-use-equals-default>
+   hicpp-use-equals-delete (redirects to modernize-use-equals-delete) <hicpp-use-equals-delete>
+   hicpp-use-override (redirects to modernize-use-override) <hicpp-use-override>
    llvm-header-guard
    llvm-include-order
    llvm-namespace-comment
@@ -64,9 +96,11 @@ Clang-Tidy Checks
    misc-definitions-in-headers
    misc-fold-init-type
    misc-forward-declaration-namespace
+   misc-forwarding-reference-overload
    misc-inaccurate-erase
    misc-incorrect-roundings
    misc-inefficient-algorithm
+   misc-lambda-function-name
    misc-macro-parentheses
    misc-macro-repeated-side-effects
    misc-misplaced-const
@@ -110,14 +144,17 @@ Clang-Tidy Checks
    modernize-raw-string-literal
    modernize-redundant-void-arg
    modernize-replace-auto-ptr
+   modernize-replace-random-shuffle
    modernize-return-braced-init-list
    modernize-shrink-to-fit
+   modernize-unary-static-assert
    modernize-use-auto
    modernize-use-bool-literals
    modernize-use-default-member-init
    modernize-use-emplace
    modernize-use-equals-default
    modernize-use-equals-delete
+   modernize-use-noexcept
    modernize-use-nullptr
    modernize-use-override
    modernize-use-transparent-functors
@@ -126,8 +163,9 @@ Clang-Tidy Checks
    mpi-type-mismatch
    performance-faster-string-find
    performance-for-range-copy
-   performance-implicit-cast-in-loop
+   performance-implicit-conversion-in-loop
    performance-inefficient-string-concatenation
+   performance-inefficient-vector-operation
    performance-type-promotion-in-math-fn
    performance-unnecessary-copy-initialization
    performance-unnecessary-value-param
@@ -139,7 +177,7 @@ Clang-Tidy Checks
    readability-else-after-return
    readability-function-size
    readability-identifier-naming
-   readability-implicit-bool-cast
+   readability-implicit-bool-conversion
    readability-inconsistent-declaration-parameter-name
    readability-misleading-indentation
    readability-misplaced-array-index
@@ -153,6 +191,6 @@ Clang-Tidy Checks
    readability-redundant-string-cstr
    readability-redundant-string-init
    readability-simplify-boolean-expr
+   readability-static-accessed-through-instance
    readability-static-definition-in-anonymous-namespace
    readability-uniqueptr-delete-release
-   safety-no-assembler
